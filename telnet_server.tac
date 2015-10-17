@@ -12,11 +12,11 @@ class TelnetTexasHoldem(TelnetProtocol):
 
     def connectionMade(self):
         TelnetTexasHoldem.user_count += 1
-        self.transport.write("welcome user %d\r\n" %(TelnetTexasHoldem.user_count,))
+        self.transport.write("welcome user %d \n\r" %(TelnetTexasHoldem.user_count,))
 
     def dataReceived(self, data):
 	print "data received  ", data
-        self.transport.write("your data back: %s\r\n" % (data,))
+        self.transport.write("your data back: %s \n\r" % (data,))
 
 factory = ServerFactory()
 factory.protocol = lambda: TelnetTransport(TelnetTexasHoldem)
