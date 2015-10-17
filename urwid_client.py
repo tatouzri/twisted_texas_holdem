@@ -39,7 +39,7 @@ class TelnetClient(StatefulTelnetProtocol):
 	"""
 	display recieved data
 	"""
-	self.delegateCall("lineReceived",line)
+	self.delegateCall("lineReceived",line.rstrip('\r\n').rstrip(" "))
 
     def delegateCall(self, method, *args, **kwargs):
         """ Delegate our call to the controller.
@@ -73,13 +73,15 @@ class View(object):
         """
 	init screen
         """
-        self.text = urwid.Text(('banner', u" Connecting ... "), align='center')
-	fill = urwid.Filler(self.text)
-	self.frame = urwid.AttrMap(fill, 'bg')
+        text = urwid.Text(('banner', u" Connecting ... "), align='center')
+	self.fill = urwid.Filler(text)
+	self.frame = urwid.AttrMap(self.fill, 'bg')
 
-    def lineWrite(self, text):
+    def lineWrite(self, new_text):
         """ change message if connected. """
-        self.text.set_text(text)
+	new_txt_spaced = " " + new_text + " "
+	new_text_widget = urwid.Text(('banner', new_txt_spaced.encode("utf-8")), align='center')
+	self.fill.original_widget = new_text_widget
 
 class Controller(object):
     """ The controller is what glues all components together.
@@ -110,6 +112,8 @@ class Controller(object):
         """
 	display connected
         """
+	# self.view.lineWrite("connected")
+	# self.loop.draw_screen()
 
     def lineReceived(self, line):
 	"""
