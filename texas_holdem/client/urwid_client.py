@@ -1,16 +1,5 @@
-"""
-This is an example of how to integrate urwid with Twisted by using
-urwid.TwistedEventLoop. It is nothing fancy, and error checking is severly
-lacking but it gets the job done to demonstrate how it works.
-Author: Alexander Borgerth (sobber)
-alex.borgert@gmail.com
-PS: Requires urwid 0.9.9.1 from wardi's github repository, with commit
-'84dba9430ac0f5d842897d0d7fbe36df2c06a5a7' which fixes urwid.TwistedEventLoop()
-to use reactor.stop() instead of reactor.crash() to stop the reactor.
-git clone git://github.com/wardi/urwid.git
-"""
-
 import urwid
+import window
 
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.conch.telnet import TelnetTransport, StatefulTelnetProtocol
@@ -25,7 +14,7 @@ class TelnetClient(StatefulTelnetProtocol):
 
     def rawDataReceived(self,bytes):
         """
-	receive arw data
+	receive raw data
         """
 	self.delegateCall("rawDataReceived",bytes)
 
@@ -35,11 +24,17 @@ class TelnetClient(StatefulTelnetProtocol):
         """
 	self.delegateCall("connectionMade")
 
-    def lineReceived(self, line):
+    #def lineReceived(self, line):
+	"""
+	display recieved line
+	"""
+	#self.delegateCall("lineReceived",line.rstrip('\r\n').rstrip(" "))
+
+    def dataReceived(self, data):
 	"""
 	display recieved data
 	"""
-	self.delegateCall("lineReceived",line.rstrip('\r\n').rstrip(" "))
+	self.delegateCall("dataReceived",data)
 
     def delegateCall(self, method, *args, **kwargs):
         """ Delegate our call to the controller.
@@ -62,27 +57,6 @@ class TelnetFactory(protocol.ClientFactory):
         self.controller.connection = instance
         return instance
 
-class View(object):
-
-    palette = [
-        ('banner', 'yellow', 'dark red'),
-        ('bg', 'black', 'dark blue'),
-    ]
-
-    def __init__(self):
-        """
-	init screen
-        """
-        text = urwid.Text(('banner', u" Connecting ... "), align='center')
-	self.fill = urwid.Filler(text)
-	self.frame = urwid.AttrMap(self.fill, 'bg')
-
-    def lineWrite(self, new_text):
-        """ change message if connected. """
-	new_txt_spaced = " " + new_text + " "
-	new_text_widget = urwid.Text(('banner', new_txt_spaced.encode("utf-8")), align='center')
-	self.fill.original_widget = new_text_widget
-
 class Controller(object):
     """ The controller is what glues all components together.
     It displays the data received by the protocol instance on the view, it
@@ -90,7 +64,7 @@ class Controller(object):
     """
 
     def __init__(self):
-        self.view = View()
+        self.view = window.MainWindow(self)
         self.factory = TelnetFactory(self)
 
     def main(self):
@@ -107,20 +81,29 @@ class Controller(object):
     def connect_to_telnet_server(self):
 	reactor.connectTCP("localhost", 5051, self.factory)
 
-
     def connectionMade(self):
         """
-	display connected
+	main window
         """
-	# self.view.lineWrite("connected")
-	# self.loop.draw_screen()
+	self.view.diplay_connection_page()
+	self.loop.draw_screen()
 
     def lineReceived(self, line):
 	"""
+	display recieved line
+	"""
+	print "line received  ", line
+	# self.view.line_write("connected")
+	# self.loop.draw_screen()
+
+    def dataReceived(self, data):
+	"""
 	display recieved data
 	"""
-	self.view.lineWrite(line)
-	self.loop.draw_screen()
+	print data
+
+    def send_data(self,data):
+	self.connection.sendLine(data)
 
     def exit_on_q(self,key):
         if key in ('q', 'Q'):
