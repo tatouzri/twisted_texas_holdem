@@ -14,11 +14,12 @@ class DatabaseConnection():
 	self.cursor = self.connection.cursor()
 
     def create_user(self,username,plain_pwd,hint):
-	hashed_pwd = bcrypt.hashpw(plain_pwd, bcrypt.gensalt())
+	hashed_pwd = bcrypt.hashpw(plain_pwd.encode('utf-8'), bcrypt.gensalt())
 	insertstmt=("insert into texas_holdem_users (user_name, password, hint) values ('%s', '%s', '%s')" % (username,hashed_pwd, hint))
 	try:
 	    self.cursor.execute(insertstmt)
 	    self.connection.commit()
+	    return username
 	except:
             self.connection.rollback()
 
@@ -30,7 +31,7 @@ class DatabaseConnection():
     	    if data == None :
                 return None
 	    hashed_pwd = data[1]
-	    if bcrypt.hashpw(plain_pwd, hashed_pwd) == hashed_pwd:
+	    if bcrypt.hashpw(plain_pwd.encode('utf-8'), hashed_pwd) == hashed_pwd:
 		return username
 	    else:
 		return None
@@ -56,7 +57,7 @@ class DatabaseConnection():
 	try:
 	    self.cursor.execute("DROP TABLE IF EXISTS texas_holdem_users")
 	    self.cursor.execute("CREATE TABLE texas_holdem_users(id INT PRIMARY KEY AUTO_INCREMENT, \
-		 user_name VARCHAR(25), password char(60), hint VARCHAR(64))")
+		 user_name VARCHAR(25), password char(60), hint VARCHAR(64),UNIQUE(user_name))")
 	    self.connection.commit()
 
 	except mdb.Error, e:

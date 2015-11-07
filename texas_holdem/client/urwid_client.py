@@ -1,5 +1,6 @@
 import urwid
 import window
+import json
 
 from twisted.internet.protocol import ReconnectingClientFactory
 from twisted.conch.telnet import TelnetTransport, StatefulTelnetProtocol
@@ -92,18 +93,46 @@ class Controller(object):
 	"""
 	display recieved line
 	"""
-	print "line received  ", line
-	# self.view.line_write("connected")
-	# self.loop.draw_screen()
+	pass
 
     def dataReceived(self, data):
 	"""
 	display recieved data
 	"""
-	print data
+	self.handle_message(data)
 
     def send_data(self,data):
 	self.connection.sendLine(data)
+
+    def registration_response(self,json_message):
+	if (json_message['status']=='KO'):
+	    self.view.display_error_message(json_message['message'])
+	else:
+	    self.view.display_success_message(json_message['message'])
+	self.loop.draw_screen()
+
+    def login_response(self,json_message):
+	if (json_message['status']=='KO'):
+	    self.view.display_error_message(json_message['message'])
+	else:
+	    self.view.display_success_message(json_message['message'])
+	self.loop.draw_screen()
+
+    def hint_response(self,json_message):
+	if (json_message['status']=='KO'):
+	    self.view.display_error_message(json_message['message'])
+	else:
+	    self.view.display_success_message(json_message['message'])
+	self.loop.draw_screen()
+
+    def handle_message(self,json_string):
+	parsed_json = json.loads(json_string)
+	message_type = parsed_json['message_type']
+	return {
+	    'registration' : lambda json_message: self.registration_response(json_message),
+	    'login' : lambda json_message: self.login_response(json_message),
+	    'hint' : lambda json_message: self.hint_response(json_message),
+	}[message_type](parsed_json)
 
     def exit_on_q(self,key):
         if key in ('q', 'Q'):

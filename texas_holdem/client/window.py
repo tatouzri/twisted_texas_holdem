@@ -7,6 +7,8 @@ class MainWindow(object):
         ('banner', 'yellow', 'dark red'),
         ('btn', 'light gray', 'dark blue'),
         ('txt', 'light gray', 'dark blue'),
+	('error', 'light red', 'dark blue'),
+	('success', 'light green', 'dark blue'),
         ('edt', 'light gray', 'dark blue', 'standout'),
         ('streak', 'black', 'dark red'),
         ('bg', 'black', 'dark blue'),
@@ -21,6 +23,7 @@ class MainWindow(object):
         text = urwid.Text(('banner', u" Connecting ... "), align='center')
 	self.fill = urwid.Filler(text)
 	self.frame = urwid.AttrMap(self.fill, 'bg')
+	self.message = urwid.AttrMap(urwid.Text('',align='center'),'txt')
 
     def line_write(self, new_text):
         """ change message if connected. """
@@ -60,7 +63,8 @@ class MainWindow(object):
 
     def login_page(self):
 	menuTitle = urwid.AttrMap(urwid.Text(u'LOGIN',align='center'),'txt')
-    	body = [menuTitle, urwid.Divider(), urwid.Divider()]
+	self.message.original_widget.set_text('')
+    	body = [menuTitle, urwid.Divider(), urwid.Divider(),self.message, urwid.Divider()]
 	
 	login_input = urwid.Edit(u'')
 	body.append(self.input_line(u'login',self.input_area(login_input)))
@@ -73,7 +77,8 @@ class MainWindow(object):
 
     def registration_page(self):
 	menuTitle = urwid.AttrMap(urwid.Text(u'REGISTRATION',align='center'),'txt')
-    	body = [menuTitle, urwid.Divider(), urwid.Divider()]
+	self.message.original_widget.set_text('')
+    	body = [menuTitle, urwid.Divider(), urwid.Divider(),self.message, urwid.Divider()]
 	
 	login_input = urwid.Edit(u'')
 	body.append(self.input_line(u'login',self.input_area(login_input)))
@@ -93,12 +98,12 @@ class MainWindow(object):
 
     def open_login_page(self,button):
         mainmenu = urwid.Padding(self.login_page(), align='center',left=20,right=20)
-	mainadapter = urwid.BoxAdapter(mainmenu,22)
+	mainadapter = urwid.BoxAdapter(mainmenu,25)
 	self.fill.original_widget = mainadapter
 
     def open_registration_page(self,button):
         mainmenu = urwid.Padding(self.registration_page(), align='center',left=20,right=20)
-	mainadapter = urwid.BoxAdapter(mainmenu,22)
+	mainadapter = urwid.BoxAdapter(mainmenu,25)
 	self.fill.original_widget = mainadapter
 
     def exit_program(self,button):
@@ -108,7 +113,7 @@ class MainWindow(object):
 	username = params[0].get_edit_text()
 	pwd = params[1].get_edit_text()
 	if (not username or not pwd):
-	    print 'please verify your inputs'
+	    self.display_error_message('please verify your inputs')
 	else:
 	    usr = user.LoginUser(username,pwd)
 	    json_usr = usr.to_JSON()
@@ -120,7 +125,7 @@ class MainWindow(object):
 	verif_pwd = params[2].get_edit_text()
 	hint = params[3].get_edit_text()
 	if (not username or not pwd or not hint or pwd!= verif_pwd):
-	    print 'please verify your inputs'
+	    self.display_error_message('please verify your inputs')
 	else:
 	    usr = user.RegisterUser(username,pwd,hint)
 	    json_usr = usr.to_JSON()
@@ -129,11 +134,23 @@ class MainWindow(object):
     def show_hint(self,button,params):
 	username = params[0].get_edit_text()
 	if (not username):
-	    print 'please verify your inputs'
+	    self.display_error_message('please verify your inputs')
 	else:
 	    usr = user.AskForHintUser(username)
 	    json_usr = usr.to_JSON()
 	    self.controller.send_data(json_usr)
+
+    def display_error_message(self,message):
+	self.message.original_widget.set_text(message)
+	self.message.set_attr_map({None:'error'})
+
+    def display_success_message(self,message):
+	self.message.original_widget.set_text(message)
+	self.message.set_attr_map({None:'success'})
+
+    def display_message(self,message):
+	self.message.original_widget.set_text(message)
+	self.message.set_attr_map({None:'txt'})
 
     def return_connection_page(self,button):
 	self.diplay_connection_page()

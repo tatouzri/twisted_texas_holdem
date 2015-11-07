@@ -21,4 +21,4 @@ class LoginUser(User):
 
 class AskForHintUser(User):
     def __init__(self, username=''):
-	super(AskForHintUser, self).__init__(username,'ask_hint')
+	super(AskForHintUser, self).__init__(username,'hint')
